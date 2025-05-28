@@ -61,7 +61,8 @@ router.post('/', authMiddleware, async (req, res) => {
     const aiResponse = response.data.choices[0].message.content;
 
     // save in DB
-    const newMessage = new Message({ userId: req.userId, userMessage, aiResponse });
+    const newMessage = new Message({ userId: req.user.id, userMessage, aiResponse });
+
     await newMessage.save();
 
     res.json({ reply: aiResponse });

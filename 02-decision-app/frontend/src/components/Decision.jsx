@@ -27,19 +27,15 @@ const Decision = () => {
     }
 
     try {
-      const response = await axios.get('http://localhost:5000/api/history', {
+      const response = await axios.get('http://localhost:5000/api/decision-history', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (Array.isArray(response.data)) {
         const formatted = response.data.flatMap((item) => [
-          item.userMessage
-            ? { user: 'You', text: item.userMessage }
-            : null,
-          item.aiResponse
-            ? { user: 'Bot', text: item.aiResponse }
-            : null,
-        ].filter(Boolean));
+          { user: 'You', text: item.userMessage },
+          { user: 'Bot', text: item.aiResponse },
+        ]);
         setDecisions(formatted);
       } else {
         setDecisions([{ user: 'Bot', text: 'Unexpected response format from server.' }]);
@@ -80,24 +76,8 @@ const Decision = () => {
       <div className="w-full max-w-3xl">
         <h2 className="text-3xl font-normal text-center mb-6 tracking-wide">Decision Insight</h2>
 
-        {/* Динамічні кнопки */}
         <div className="mb-4 flex justify-center gap-2">
-          {isLoggedIn ? (
-            <>
-              <button
-                onClick={fetchHistory}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white transition"
-              >
-                Load History
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-white transition"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
+          {!isLoggedIn && (
             <>
               <button
                 onClick={() => navigate('/login')}
@@ -113,11 +93,27 @@ const Decision = () => {
               </button>
             </>
           )}
+
+          {isLoggedIn && (
+            <>
+              <button
+                onClick={fetchHistory}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white transition"
+              >
+                Load History
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-white transition"
+              >
+                Logout
+              </button>
+            </>
+          )}
         </div>
 
-        {/* Chat box */}
         <div className="bg-gray-800 rounded-lg p-4 mb-6 space-y-3 max-h-[40rem] overflow-y-auto shadow-inner">
-        {decisions
+          {decisions
             .filter((d) => d.user && d.text && d.text.trim())
             .map((d, i) => {
               const isUser = d.user.toLowerCase() === 'you';
@@ -142,7 +138,6 @@ const Decision = () => {
             })}
         </div>
 
-        {/* Input field and analyze button */}
         <div className="flex items-center gap-2">
           <input
             type="text"

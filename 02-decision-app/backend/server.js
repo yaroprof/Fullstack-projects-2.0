@@ -6,8 +6,9 @@ import cors from 'cors';
 
 import decisionRoutes from './routes/decisionRoutes.js';
 import authRoutes from './routes/authRoutes.js';
-import historyRoutes from './routes/historyRoutes.js';
-import messageRoutes from './routes/messageRoutes.js';
+// import historyRoutes from './routes/historyRoutes.js';
+// import messageRoutes from './routes/messageRoutes.js';
+import decisionHistoryRoutes from './routes/decisionHistoryRoutes.js';
 
 
 
@@ -22,9 +23,11 @@ app.use(express.json());
 
 // Правильні HTTP-роути
 app.use('/api/auth', authRoutes);
-app.use('/api/messages', messageRoutes);
+// app.use('/api/messages', messageRoutes);
 app.use('/api', decisionRoutes);
-app.use('/api/history', historyRoutes);
+// app.use('/api/history', historyRoutes);
+app.use('/api/decision-history', decisionHistoryRoutes);
+
 
 // Кореневий маршрут
 app.get('/', (req, res) => {
