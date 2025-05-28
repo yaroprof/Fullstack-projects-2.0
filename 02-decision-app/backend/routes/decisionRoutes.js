@@ -2,13 +2,15 @@ import express from 'express';
 import axios from 'axios'; // нова бібліотека для HTTP запитів
 import dotenv from 'dotenv';
 import Message from '../models/Message.js';
+import authMiddleware from '../authMiddleware/authMiddleware.js';
+
 
 const router = express.Router();
 dotenv.config();
 
 // Перевірка наявності ключа
 if (!process.env.GROQ_API_KEY) {
-  throw new Error('❌ GROQ_API_KEY is missing in .env');
+  throw new Error('GROQ_API_KEY is missing in .env');
 }
 
 
@@ -29,7 +31,7 @@ router.get("/", async (req, res) => {
 // });
 
 // POST маршрут для аналізу рішень
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   const { message: userMessage } = req.body;
 
   if (!userMessage) {
@@ -59,7 +61,7 @@ router.post('/', async (req, res) => {
     const aiResponse = response.data.choices[0].message.content;
 
     // save in DB
-    const newMessage = new Message({ userMessage, aiResponse });
+    const newMessage = new Message({ userId: req.userId, userMessage, aiResponse });
     await newMessage.save();
 
     res.json({ reply: aiResponse });

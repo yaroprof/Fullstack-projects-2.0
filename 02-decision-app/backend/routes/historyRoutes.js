@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import Message from '../models/Message.js';
-
+import authMiddleware from '../authMiddleware/authMiddleware.js';
 
 const router = express.Router();
 dotenv.config();
@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
 
 
 // GET all history
-router.get('/', async (req, res) => {
+router.get('/',authMiddleware, async (req, res) => {
     try {
         const messages = await Message.find().sort({ createdAt: -1 });
         res.json(messages)
