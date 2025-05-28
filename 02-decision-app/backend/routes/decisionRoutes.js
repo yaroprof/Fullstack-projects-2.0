@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
         model: 'llama3-70b-8192',
         messages: [
           { role: 'system', content: 'You are a helpful assistant for analyzing decisions.' },
-          { role: 'user', content: message },
+          { role: 'user', content: userMessage },
         ],
         temperature: 0.7,
         max_tokens: 1024,
