@@ -1,33 +1,46 @@
 // src/components/Decision.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const Decision = () => {
   const [message, setMessage] = useState('');
   const [decisions, setDecisions] = useState([]);
 
+
+  // Load history throw component mounting 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api');
+        // Перевіряємо, чи response.data є масивом
+        if (Array.isArray(response.data)) {
+          setDecisions(response.data);
+        } else {
+          console.error('Unexpected response format:', response.data);
+          setDecisions([]); // Скидаємо до порожнього масиву
+        }
+
+      } catch (error) {
+        console.log('Erro fetching history:', error);
+        setDecisions([])
+      }
+    }
+    fetchHistory();
+  }, [])
+
+
+
   const analyzeDecision = async () => {
     if (message.trim()) {
-      // Додаємо повідомлення користувача до історії
-      setDecisions((prevDecisions) => [
-        ...prevDecisions,
-        { user: 'You', text: message },
-      ]);
+      setDecisions((prevDecisions) => [...prevDecisions, { user: 'You', text: message }]);
       setMessage('');
 
       try {
         const response = await axios.post('http://localhost:5000/api', { message });
-        // Додаємо відповідь бота до історії
-        setDecisions((prevDecisions) => [
-          ...prevDecisions,
-          { user: 'Bot', text: response.data.reply },
-        ]);
+        setDecisions((prevDecisions) => [...prevDecisions, { user: 'Bot', text: response.data.reply }]);
       } catch (error) {
         console.error('Error:', error);
-        setDecisions((prevDecisions) => [
-          ...prevDecisions,
-          { user: 'Bot', text: 'Error analyzing decision' },
-        ]);
+        setDecisions((prevDecisions) => [...prevDecisions, { user: 'Bot', text: 'Error analyzing decision' }]);
       }
     }
   };
@@ -48,7 +61,7 @@ const Decision = () => {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-        //   onKeyPress={(e) => e.key === 'Enter' && analyzeDecision()}
+          //   onKeyPress={(e) => e.key === 'Enter' && analyzeDecision()}
           placeholder="Enter your decision to analyze..."
         />
         <button onClick={analyzeDecision}>Analyze</button>

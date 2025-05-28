@@ -1,6 +1,7 @@
 import express from 'express';
 import axios from 'axios'; // нова бібліотека для HTTP запитів
 import dotenv from 'dotenv';
+import Message from '../models/Message.js';
 
 const router = express.Router();
 dotenv.config();
@@ -12,18 +13,31 @@ if (!process.env.GROQ_API_KEY) {
 
 
 // GET-запит (наприклад, для перевірки статусу API)
-router.get('/', (req, res) => {
 
-  res.json({ message: 'API is working. Use POST to analyze decisions.' });
+router.get("/", async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
 });
+
+// router.get('/', (req, res) => {
+//   res.json({ message: 'API is working. Use POST to analyze decisions.' });
+// });
 
 // POST маршрут для аналізу рішень
 router.post('/', async (req, res) => {
-  const { message } = req.body;
+  const { message: userMessage } = req.body;
+
+  if (!userMessage) {
+    return res.status(400).json({ error: 'userMessage is required' });
+  }
 
   try {
     const response = await axios.post(
-  
       'https://api.groq.com/openai/v1/chat/completions',
       {
         model: 'llama3-70b-8192',
@@ -42,8 +56,14 @@ router.post('/', async (req, res) => {
       }
     );
 
-    const reply = response.data.choices[0].message.content;
-    res.json({ reply });
+    const aiResponse = response.data.choices[0].message.content;
+
+    // save in DB
+    const newMessage = new Message({ userMessage, aiResponse });
+    await newMessage.save();
+
+    res.json({ reply: aiResponse });
+
   } catch (error) {
     console.error('Groq error:', error.response?.data || error.message);
     res.status(500).json({
