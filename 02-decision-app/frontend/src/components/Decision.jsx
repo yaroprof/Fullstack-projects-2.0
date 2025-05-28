@@ -11,21 +11,18 @@ const Decision = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
-
-    if (!token) {
-      setDecisions([
-        { user: 'Bot', text: 'Please log in to view history or analyze decisions' },
-      ]);
-    }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    setDecisions([{ user: 'Bot', text: 'You have been logged out.' }]);
+  };
 
   const fetchHistory = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setDecisions(prev => [
-        ...prev,
-        { user: 'Bot', text: 'Please log in to view history' },
-      ]);
+      setDecisions((prev) => [...prev, { user: 'Bot', text: 'Please log in to view history' }]);
       return;
     }
 
@@ -35,21 +32,21 @@ const Decision = () => {
       });
 
       if (Array.isArray(response.data)) {
-        const formatted = response.data.map(item => ({
-          user: item.userMessage ? 'You' : 'Bot',
-          text: item.userMessage || item.aiResponse,
-        }));
+        const formatted = response.data.flatMap((item) => [
+          item.userMessage
+            ? { user: 'You', text: item.userMessage }
+            : null,
+          item.aiResponse
+            ? { user: 'Bot', text: item.aiResponse }
+            : null,
+        ].filter(Boolean));
         setDecisions(formatted);
       } else {
-        console.error('Unexpected response format:', response.data);
-        setDecisions([]);
+        setDecisions([{ user: 'Bot', text: 'Unexpected response format from server.' }]);
       }
     } catch (error) {
       console.error('Error fetching history:', error);
-      setDecisions(prev => [
-        ...prev,
-        { user: 'Bot', text: 'Error fetching history' },
-      ]);
+      setDecisions((prev) => [...prev, { user: 'Bot', text: 'Error fetching history' }]);
     }
   };
 
@@ -58,14 +55,11 @@ const Decision = () => {
 
     const token = localStorage.getItem('token');
     if (!token) {
-      setDecisions(prev => [
-        ...prev,
-        { user: 'Bot', text: 'Please log in to analyze decisions' },
-      ]);
+      setDecisions((prev) => [...prev, { user: 'Bot', text: 'Please log in to analyze decisions' }]);
       return;
     }
 
-    setDecisions(prev => [...prev, { user: 'You', text: message }]);
+    setDecisions((prev) => [...prev, { user: 'You', text: message }]);
     setMessage('');
 
     try {
@@ -74,35 +68,36 @@ const Decision = () => {
         { message },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setDecisions(prev => [
-        ...prev,
-        { user: 'Bot', text: response.data.reply },
-      ]);
+      setDecisions((prev) => [...prev, { user: 'Bot', text: response.data.reply }]);
     } catch (error) {
       console.error('Error:', error);
-      setDecisions(prev => [
-        ...prev,
-        { user: 'Bot', text: 'Error analyzing decision' },
-      ]);
+      setDecisions((prev) => [...prev, { user: 'Bot', text: 'Error analyzing decision' }]);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans font-light flex flex-col items-center px-4 py-8">
       <div className="w-full max-w-3xl">
-
         <h2 className="text-3xl font-normal text-center mb-6 tracking-wide">Decision Insight</h2>
 
-        {/* Auth buttons */}
+        {/* Динамічні кнопки */}
         <div className="mb-4 flex justify-center gap-2">
-         
-            <button
-              onClick={fetchHistory}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white transition"
-            >
-              Load History
-            </button>
-      
+          {isLoggedIn ? (
+            <>
+              <button
+                onClick={fetchHistory}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white transition"
+              >
+                Load History
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-white transition"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
             <>
               <button
                 onClick={() => navigate('/login')}
@@ -117,13 +112,13 @@ const Decision = () => {
                 Register
               </button>
             </>
-     
+          )}
         </div>
 
         {/* Chat box */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-6 space-y-3 max-h-80 overflow-y-auto shadow-inner">
-          {decisions
-            .filter(d => d.user && d.text && d.text.trim())
+        <div className="bg-gray-800 rounded-lg p-4 mb-6 space-y-3 max-h-[40rem] overflow-y-auto shadow-inner">
+        {decisions
+            .filter((d) => d.user && d.text && d.text.trim())
             .map((d, i) => {
               const isUser = d.user.toLowerCase() === 'you';
               return (
@@ -147,7 +142,7 @@ const Decision = () => {
             })}
         </div>
 
-        {/* Input field and button */}
+        {/* Input field and analyze button */}
         <div className="flex items-center gap-2">
           <input
             type="text"
